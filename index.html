@@ -29,6 +29,7 @@
 
     <script type="text/babel">
         // Initialize Firebase
+        import { initializeApp } from "firebase/app";
         const firebaseConfig = {
             apiKey: "AIzaSyA6EWaIzrD_EAszU5JaZqDBHpzEjmVuZ8s",
             authDomain: "insider-game-fcb27.firebaseapp.com",
@@ -37,6 +38,7 @@
             messagingSenderId: "792574428743",
             appId: "1:792574428743:web:b7aae8119f664e5c6a5362"
         };
+        const app = initializeApp(firebaseConfig);
         
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
