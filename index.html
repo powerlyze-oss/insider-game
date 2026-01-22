@@ -8,6 +8,10 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
         body {
             margin: 0;
@@ -24,6 +28,20 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6EWaIzrD_EAszU5JaZqDBHpzEjmVuZ8s",
+            authDomain: "insider-game-fcb27.firebaseapp.com",
+            projectId: "insider-game-fcb27",
+            storageBucket: "insider-game-fcb27.firebasestorage.app",
+            messagingSenderId: "792574428743",
+            appId: "1:792574428743:web:b7aae8119f664e5c6a5362"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const gameRef = database.ref('game');
+
         const { useState, useEffect } = React;
 
         // Lucide icons as SVG components
@@ -98,26 +116,10 @@
             ];
 
             useEffect(() => {
-                loadGameState();
-                const interval = setInterval(loadGameState, 2000);
-                return () => clearInterval(interval);
-            }, []);
-
-            useEffect(() => {
-                if (gameState === 'playing' && timeLeft > 0 && !wordFound) {
-                    const timer = setTimeout(() => {
-                        setTimeLeft(timeLeft - 1);
-                        saveGameState({ timeLeft: timeLeft - 1 });
-                    }, 1000);
-                    return () => clearTimeout(timer);
-                }
-            }, [gameState, timeLeft, wordFound]);
-
-            const loadGameState = () => {
-                try {
-                    const state = localStorage.getItem('insider-game-state');
-                    if (state) {
-                        const data = JSON.parse(state);
+                // Listen to Firebase changes in real-time
+                const unsubscribe = gameRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
                         setGameState(data.gameState || 'lobby');
                         setPlayers(data.players || []);
                         setCurrentWord(data.currentWord || '');
@@ -126,10 +128,21 @@
                         setVotes(data.votes || {});
                         setWordFound(data.wordFound || false);
                     }
-                } catch (error) {
-                    console.log('No existing game state');
+                });
+
+                return () => gameRef.off('value', unsubscribe);
+            }, []);
+
+            useEffect(() => {
+                if (gameState === 'playing' && timeLeft > 0 && !wordFound) {
+                    const timer = setTimeout(() => {
+                        const newTime = timeLeft - 1;
+                        setTimeLeft(newTime);
+                        gameRef.update({ timeLeft: newTime });
+                    }, 1000);
+                    return () => clearTimeout(timer);
                 }
-            };
+            }, [gameState, timeLeft, wordFound]);
 
             const saveGameState = (updates = {}) => {
                 const state = {
@@ -142,7 +155,7 @@
                     wordFound,
                     ...updates
                 };
-                localStorage.setItem('insider-game-state', JSON.stringify(state));
+                gameRef.set(state);
             };
 
             const joinGame = () => {
@@ -255,7 +268,7 @@
                 setVotes({});
                 setWordFound(false);
                 setShowRole(false);
-                localStorage.setItem('insider-game-state', JSON.stringify({
+                gameRef.set({
                     gameState: 'lobby',
                     players: [],
                     currentWord: '',
@@ -263,7 +276,7 @@
                     messages: [],
                     votes: {},
                     wordFound: false
-                }));
+                });
             };
 
             const myPlayer = players.find(p => p.id === myPlayerId);
