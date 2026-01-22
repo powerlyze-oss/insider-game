@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insider Game - เกมหา Insider</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6EWaIzrD_EAszU5JaZqDBHpzEjmVuZ8s",
+            authDomain: "insider-game-fcb27.firebaseapp.com",
+            databaseURL: "https://insider-game-fcb27-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "insider-game-fcb27",
+            storageBucket: "insider-game-fcb27.firebasestorage.app",
+            messagingSenderId: "792574428743",
+            appId: "1:792574428743:web:b7aae8119f664e5c6a5362"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const gameRef = database.ref('game');
+
+        const { useState, useEffect } = React;
+
+        // Lucide icons as SVG components
+        const Users = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        const Eye = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        );
+
+        const Crown = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l7 7-7 7M12 3l7 7-7 7" />
+            </svg>
+        );
+
+        const UserCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const Play = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const RotateCcw = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        );
+
+        const MessageCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+        );
+
+        const CheckCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const InsiderGame = () => {
+            const [gameState, setGameState] = useState('lobby');
+            const [players, setPlayers] = useState([]);
+            const [playerName, setPlayerName] = useState('');
+            const [myPlayerId, setMyPlayerId] = useState(null);
+            const [currentWord, setCurrentWord] = useState('');
+            const [timeLeft, setTimeLeft] = useState(300);
+            const [messages, setMessages] = useState([]);
+            const [newMessage, setNewMessage] = useState('');
+            const [votes, setVotes] = useState({});
+            const [wordFound, setWordFound] = useState(false);
+            const [showRole, setShowRole] = useState(false);
+
+            const wordBank = [
+                'ช้าง', 'พิซซ่า', 'ดวงอาทิตย์', 'กล้วย', 'รถไฟ', 'เพนกวิน', 'กีตาร์', 'ปราสาท',
+                'ไอศกรีม', 'มังกร', 'รุ้ง', 'ภูเขาไฟ', 'ดินสอ', 'ฟุตบอล', 'นักบิน', 'โรงพยาบาล',
+                'แฮมเบอร์เกอร์', 'วีดิโอเกม', 'ดอกกุหลาบ', 'จรวด', 'หุ่นยนต์', 'ช็อกโกแลต',
+                'กาแฟ', 'แมว', 'สุนัข', 'ดอกไม้', 'ทะเล', 'เครื่องบิน', 'รองเท้า', 'หนังสือ'
+            ];
+
+            useEffect(() => {
+                // Listen to Firebase changes in real-time
+                const unsubscribe = gameRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        setGameState(data.gameState || 'lobby');
+                        setPlayers(data.players || []);
+                        setCurrentWord(data.currentWord || '');
+                        setTimeLeft(data.timeLeft || 300);
+                        setMessages(data.messages || []);
+                        setVotes(data.votes || {});
+                        setWordFound(data.wordFound || false);
+                    }
+                });
+
+                return () => gameRef.off('value', unsubscribe);
+            }, []);
+
+            useEffect(() => {
+                if (gameState === 'playing' && timeLeft > 0 && !wordFound) {
+                    const timer = setTimeout(() => {
+                        const newTime = timeLeft - 1;
+                        setTimeLeft(newTime);
+                        gameRef.update({ timeLeft: newTime });
+                    }, 1000);
+                    return () => clearTimeout(timer);
+                }
+            }, [gameState, timeLeft, wordFound]);
+
+            const saveGameState = (updates = {}) => {
+                const state = {
+                    gameState,
+                    players,
+                    currentWord,
+                    timeLeft,
+                    messages,
+                    votes,
+                    wordFound,
+                    ...updates
+                };
+                gameRef.set(state);
+            };
+
+            const joinGame = () => {
+                if (!playerName.trim()) return;
+                
+                const newPlayer = {
+                    id: Date.now() + Math.random(),
+                    name: playerName.trim(),
+                    role: null
+                };
+                
+                const updatedPlayers = [...players, newPlayer];
+                setPlayers(updatedPlayers);
+                setMyPlayerId(newPlayer.id);
+                setPlayerName('');
+                
+                saveGameState({ players: updatedPlayers });
+            };
+
+            const startGame = () => {
+                if (players.length < 3) {
+                    alert('ต้องมีผู้เล่นอย่างน้อย 3 คน!');
+                    return;
+                }
+
+                const shuffled = [...players].sort(() => Math.random() - 0.5);
+                const master = { ...shuffled[0], role: 'master' };
+                const insider = { ...shuffled[1], role: 'insider' };
+                const commons = shuffled.slice(2).map(p => ({ ...p, role: 'common' }));
+                
+                const roledPlayers = [master, insider, ...commons];
+                const word = wordBank[Math.floor(Math.random() * wordBank.length)];
+                
+                setPlayers(roledPlayers);
+                setCurrentWord(word);
+                setGameState('role-reveal');
+                setTimeLeft(300);
+                setMessages([]);
+                setVotes({});
+                setWordFound(false);
+                
+                saveGameState({
+                    gameState: 'role-reveal',
+                    players: roledPlayers,
+                    currentWord: word,
+                    timeLeft: 300,
+                    messages: [],
+                    votes: {},
+                    wordFound: false
+                });
+            };
+
+            const revealRole = () => {
+                setShowRole(true);
+            };
+
+            const startPlaying = () => {
+                setGameState('playing');
+                saveGameState({ gameState: 'playing' });
+            };
+
+            const sendMessage = () => {
+                if (!newMessage.trim()) return;
+                
+                const player = players.find(p => p.id === myPlayerId);
+                const message = {
+                    id: Date.now(),
+                    playerId: myPlayerId,
+                    playerName: player?.name || 'Unknown',
+                    text: newMessage.trim(),
+                    timestamp: new Date().toLocaleTimeString('th-TH')
+                };
+                
+                const updatedMessages = [...messages, message];
+                setMessages(updatedMessages);
+                setNewMessage('');
+                
+                saveGameState({ messages: updatedMessages });
+            };
+
+            const foundWord = () => {
+                setWordFound(true);
+                saveGameState({ wordFound: true });
+            };
+
+            const startVoting = () => {
+                setGameState('voting');
+                setVotes({});
+                saveGameState({ gameState: 'voting', votes: {} });
+            };
+
+            const vote = (votedPlayerId) => {
+                const updatedVotes = { ...votes, [myPlayerId]: votedPlayerId };
+                setVotes(updatedVotes);
+                saveGameState({ votes: updatedVotes });
+            };
+
+            const showResults = () => {
+                setGameState('result');
+                saveGameState({ gameState: 'result' });
+            };
+
+            const resetGame = () => {
+                setGameState('lobby');
+                setPlayers([]);
+                setMyPlayerId(null);
+                setCurrentWord('');
+                setTimeLeft(300);
+                setMessages([]);
+                setVotes({});
+                setWordFound(false);
+                setShowRole(false);
+                gameRef.set({
+                    gameState: 'lobby',
+                    players: [],
+                    currentWord: '',
+                    timeLeft: 300,
+                    messages: [],
+                    votes: {},
+                    wordFound: false
+                });
+            };
+
+            const myPlayer = players.find(p => p.id === myPlayerId);
+            const master = players.find(p => p.role === 'master');
+            const insider = players.find(p => p.role === 'insider');
+            
+            const voteResults = Object.entries(
+                Object.values(votes).reduce((acc, votedId) => {
+                    acc[votedId] = (acc[votedId] || 0) + 1;
+                    return acc;
+                }, {})
+            ).map(([playerId, count]) => ({
+                player: players.find(p => p.id === parseInt(playerId)),
+                votes: count
+            })).sort((a, b) => b.votes - a.votes);
+
+            const mostVoted = voteResults[0]?.player;
+            const insiderWon = mostVoted?.id !== insider?.id;
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-4 text-white">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Eye className="w-8 h-8" />
+                                    <h1 className="text-3xl font-bold">Insider Game</h1>
+                                </div>
+                                {gameState === 'playing' && (
+                                    <div className="text-2xl font-mono bg-white/20 px-4 py-2 rounded-lg">
+                                        {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {gameState === 'lobby' && (
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-white">
+                                <h2 className="text-2xl font-bold mb-6 text-center">ห้องรอ</h2>
+                                
+                                {!myPlayerId ? (
+                                    <div className="mb-6">
+                                        <input
+                                            type="text"
+                                            value={playerName}
+                                            onChange={(e) => setPlayerName(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && joinGame()}
+                                            placeholder="ใส่ชื่อของคุณ"
+                                            className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/60 border-2 border-white/30 focus:border-white/60 focus:outline-none"
+                                        />
+                                        <button
+                                            onClick={joinGame}
+                                            className="w-full mt-3 bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+                                        >
+                                            <Users className="w-5 h-5" />
+                                            เข้าร่วมเกม
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="mb-6 text-center p-4 bg-green-500/20 rounded-lg border-2 border-green-500">
+                                        คุณเข้าร่วมแล้ว: <strong>{myPlayer?.name}</strong>
+                                    </div>
+                                )}
+
+                                <div className="mb-6">
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                        <Users className="w-5 h-5" />
+                                        ผู้เล่น ({players.length})
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {players.map(player => (
+                                            <div key={player.id} className="bg-white/20 px-4 py-2 rounded-lg">
+                                                {player.name}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {myPlayerId && players[0]?.id === myPlayerId && (
+                                    <button
+                                        onClick={startGame}
+                                        disabled={players.length < 3}
+                                        className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-gray-500 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+                                    >
+                                        <Play className="w-5 h-5" />
+                                        เริ่มเกม (ต้องมีอย่างน้อย 3 คน)
+                                    </button>
+                                )}
+
+                                <div className="mt-6 p-4 bg-white/10 rounded-lg text-sm">
+                                    <h4 className="font-semibold mb-2">วิธีเล่น:</h4>
+                                    <ul className="space-y-1 text-white/80">
+                                        <li>• <strong>Master:</strong> รู้คำตอบ ตอบคำถามแบบ ใช่/ไม่ใช่</li>
+                                        <li>• <strong>Insider:</strong> แอบรู้คำตอบ ต้องแกล้งทำเป็นไม่รู้</li>
+                                        <li>• <strong>Players:</strong> ถามคำถามเพื่อหาคำตอบ</li>
+                                        <li>• หลังหาเจอ ต้องโหวตหา Insider ภายใน 5 นาที</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        {gameState === 'role-reveal' && (
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-white text-center">
+                                <h2 className="text-2xl font-bold mb-6">บทบาทของคุณ</h2>
+                                
+                                {!showRole ? (
+                                    <div>
+                                        <p className="mb-6">กดปุ่มเพื่อดูบทบาทของคุณ (อย่าให้ใครเห็น!)</p>
+                                        <button
+                                            onClick={revealRole}
+                                            className="bg-yellow-500 hover:bg-yellow-600 px-8 py-4 rounded-lg font-semibold text-xl"
+                                        >
+                                            <Eye className="w-6 h-6 inline mr-2" />
+                                            เปิดดูบทบาท
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        {myPlayer?.role === 'master' && (
+                                            <div className="mb-6 p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-xl">
+                                                <Crown className="w-16 h-16 mx-auto mb-4" />
+                                                <h3 className="text-2xl font-bold mb-2">คุณคือ Master</h3>
+                                                <p className="mb-4">คำตอบคือ: <span className="text-3xl font-bold">{currentWord}</span></p>
+                                                <p className="text-sm">ตอบคำถามด้วย ใช่/ไม่ใช่/ใกล้แล้ว เท่านั้น</p>
+                                            </div>
+                                        )}
+                                        
+                                        {myPlayer?.role === 'insider' && (
+                                            <div className="mb-6 p-6 bg-red-500/20 border-2 border-red-500 rounded-xl">
+                                                <Eye className="w-16 h-16 mx-auto mb-4" />
+                                                <h3 className="text-2xl font-bold mb-2">คุณคือ Insider</h3>
+                                                <p className="mb-4">คำตอบคือ: <span className="text-3xl font-bold">{currentWord}</span></p>
+                                                <p className="text-sm">แกล้งทำเป็นไม่รู้ แต่ช่วยชี้แนะทางอ้อม อย่าให้ใครรู้!</p>
+                                            </div>
+                                        )}
+                                        
+                                        {myPlayer?.role === 'common' && (
+                                            <div className="mb-6 p-6 bg-blue-500/20 border-2 border-blue-500 rounded-xl">
+                                                <UserCircle className="w-16 h-16 mx-auto mb-4" />
+                                                <h3 className="text-2xl font-bold mb-2">คุณคือ Player ทั่วไป</h3>
+                                                <p className="text-sm">ถามคำถามเพื่อหาคำตอบ แล้วหา Insider!</p>
+                                            </div>
+                                        )}
+
+                                        {myPlayerId === master?.id && (
+                                            <button
+                                                onClick={startPlaying}
+                                                className="bg-green-500 hover:bg-green-600 px-8 py-4 rounded-lg font-semibold text-xl"
+                                            >
+                                                <Play className="w-6 h-6 inline mr-2" />
+                                                เริ่มเล่น
+                                            </button>
+                                        )}
+                                        
+                                        {myPlayerId !== master?.id && (
+                                            <p className="text-white/60">รอ Master เริ่มเกม...</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {gameState === 'playing' && (
+                            <div className="space-y-4">
+                                <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 text-white">
+                                    {myPlayer?.role === 'master' && (
+                                        <div className="flex items-center gap-2">
+                                            <Crown className="w-5 h-5 text-yellow-400" />
+                                            <span>คุณคือ Master | คำตอบ: <strong>{currentWord}</strong></span>
+                                        </div>
+                                    )}
+                                    {myPlayer?.role === 'insider' && (
+                                        <div className="flex items-center gap-2">
+                                            <Eye className="w-5 h-5 text-red-400" />
+                                            <span>คุณคือ Insider | คำตอบ: <strong>{currentWord}</strong></span>
+                                        </div>
+                                    )}
+                                    {myPlayer?.role === 'common' && (
+                                        <div className="flex items-center gap-2">
+                                            <UserCircle className="w-5 h-5 text-blue-400" />
+                                            <span>คุณคือ Player | ถามคำถามเพื่อหาคำตอบ</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 text-white">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-semibold flex items-center gap-2">
+                                            <MessageCircle className="w-5 h-5" />
+                                            การสนทนา
+                                        </h3>
+                                        {!wordFound && myPlayerId === master?.id && (
+                                            <button
+                                                onClick={foundWord}
+                                                className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                                หาคำตอบเจอแล้ว
+                                            </button>
+                                        )}
+                                        {wordFound && myPlayerId === master?.id && (
+                                            <button
+                                                onClick={startVoting}
+                                                className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg text-sm font-semibold"
+                                            >
+                                                เริ่มโหวต
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="h-64 overflow-y-auto mb-4 space-y-2 bg-black/20 rounded-lg p-3">
+                                        {messages.map(msg => (
+                                            <div key={msg.id} className="bg-white/10 rounded-lg p-3">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="font-semibold text-sm">{msg.playerName}</span>
+                                                    <span className="text-xs text-white/60">{msg.timestamp}</span>
+                                                </div>
+                                                <p className="text-white/90">{msg.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newMessage}
+                                            onChange={(e) => setNewMessage(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                            placeholder="พิมพ์ข้อความ..."
+                                            className="flex-1 px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border-2 border-white/30 focus:border-white/60 focus:outline-none"
+                                        />
+                                        <button
+                                            onClick={sendMessage}
+                                            className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg font-semibold"
+                                        >
+                                            ส่ง
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {gameState === 'voting' && (
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-white">
+                                <h2 className="text-2xl font-bold mb-6 text-center">โหวตหา Insider</h2>
+                                
+                                <div className="mb-6">
+                                    <p className="text-center mb-4">คุณคิดว่าใครคือ Insider?</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {players.filter(p => p.role !== 'master').map(player => (
+                                            <button
+                                                key={player.id}
+                                                onClick={() => vote(player.id)}
+                                                disabled={votes[myPlayerId]}
+                                                className={`p-4 rounded-lg font-semibold ${
+                                                    votes[myPlayerId] === player.id
+                                                        ? 'bg-red-500'
+                                                        : 'bg-white/20 hover:bg-white/30 disabled:opacity-50'
+                                                }`}
+                                            >
+                                                {player.name}
+                                                {votes[myPlayerId] === player.id && ' ✓'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="text-center text-sm text-white/60 mb-4">
+                                    โหวตแล้ว: {Object.keys(votes).length} / {players.length}
+                                </div>
+
+                                {Object.keys(votes).length === players.length && myPlayerId === master?.id && (
+                                    <button
+                                        onClick={showResults}
+                                        className="w-full bg-purple-500 hover:bg-purple-600 px-6 py-3 rounded-lg font-semibold"
+                                    >
+                                        แสดงผล
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {gameState === 'result' && (
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-white">
+                                <h2 className="text-3xl font-bold mb-6 text-center">ผลการเล่น</h2>
+                                
+                                <div className="mb-6 p-6 bg-white/10 rounded-xl">
+                                    <p className="text-center mb-2">คำตอบคือ:</p>
+                                    <p className="text-4xl font-bold text-center mb-4">{currentWord}</p>
+                                    <p className="text-center">Insider ที่แท้จริงคือ: <strong className="text-red-400">{insider?.name}</strong></p>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-semibold mb-3">ผลโหวต:</h3>
+                                    <div className="space-y-2">
+                                        {voteResults.map(({ player, votes: count }) => (
+                                            <div
+                                                key={player?.id}
+                                                className={`p-4 rounded-lg ${
+                                                    player?.id === insider?.id
+                                                        ? 'bg-red-500/30 border-2 border-red-500'
+                                                        : 'bg-white/10'
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-semibold">{player?.name}</span>
+                                                    <span>{count} โหวต</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={`p-6 rounded-xl text-center mb-6 ${
+                                    insiderWon ? 'bg-red-500/20 border-2 border-red-500' : 'bg-green-500/20 border-2 border-green-500'
+                                }`}>
+                                    <h3 className="text-2xl font-bold mb-2">
+                                        {insiderWon ? '🎭 Insider ชนะ!' : '🎉 Players ชนะ!'}
+                                    </h3>
+                                    <p>
+                                        {insiderWon
+                                            ? 'Insider หลบหนีได้สำเร็จ!'
+                                            : 'Players หา Insider เจอ!'}
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={resetGame}
+                                    className="w-full bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+                                >
+                                    <RotateCcw className="w-5 h-5" />
+                                    เล่นใหม่
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<InsiderGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
